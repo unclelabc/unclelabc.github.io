@@ -1,0 +1,448 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>陈老师课堂抽问随机点名</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+        }
+        
+
+
+        /* 宇宙背景效果 */
+        #universe {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        .star {
+            position: absolute;
+            background-color: #fff;
+            border-radius: 50%;
+        }
+        
+        /* 爆炸效果 */
+        .explosion {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #fff, 0 0 20px #fff;
+            opacity: 0;
+        }
+        
+        /* 标题样式 */
+        .header {
+            text-align: center;
+            padding: 20px;
+            margin-top: 20px;
+            z-index: 1;
+        }
+        
+        .header h1 {
+            font-size: 2.8rem;
+            margin: 0;
+            color: #4fc3f7;
+            text-shadow: 0 0 15px #0288d1, 0 0 25px #03a9f4;
+            animation: pulsate 2s infinite alternate;
+        }
+        
+        @keyframes pulsate {
+            0% { text-shadow: 0 0 15px #0288d1, 0 0 25px #03a9f4; }
+            100% { text-shadow: 0 0 20px #0288d1, 0 0 30px #4fc3f7, 0 0 40px #4fc3f7; }
+        }
+        
+        /* 主要内容区域 */
+        .main-content {
+            display: flex;
+            width: 90%;
+            max-width: 1200px;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+            z-index: 1;
+        }
+        
+        /* 姓名显示区域 */
+        .name-display-container {
+            width: 60%;
+            height: 250px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(25, 25, 112, 0.3);
+            border-radius: 15px;
+            box-shadow: 0 0 25px rgba(79, 195, 247, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #name-display {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 10px #ff4081;
+            transition: all 0.3s ease;
+        }
+        
+        #name-display.selected {
+            font-size: 5.5rem;
+            color: #ff4081;
+            text-shadow: 0 0 15px #ff4081, 0 0 25px #ff4081;
+            animation: pulse 0.5s;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        /* 控制面板 */
+        .control-panel {
+            width: 30%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+            background: rgba(13, 13, 56, 0.6);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(124, 77, 255, 0.5);
+        }
+        
+        .speed-control {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .speed-control label {
+            font-size: 1.3rem;
+            color: #4fc3f7;
+            margin-bottom: 10px;
+        }
+        
+        #speedSlider {
+            width: 100%;
+            height: 20px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(to right, #003366, #4fc3f7, #ff4081);
+            outline: none;
+            border-radius: 10px;
+        }
+        
+        #speedSlider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #ff4081;
+            cursor: pointer;
+            box-shadow: 0 0 10px #ff4081;
+        }
+        
+        .speed-value {
+            font-size: 1.2rem;
+            color: #fff;
+            margin-top: 5px;
+        }
+        
+        /* 按钮样式 */
+        #toggleButton {
+            padding: 18px 50px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #ff4081, #7c4dff);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(255, 64, 129, 0.7);
+            transition: all 0.3s ease;
+        }
+        
+        #toggleButton:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(255, 64, 129, 0.9);
+        }
+        
+        #toggleButton:active {
+            transform: scale(0.95);
+        }
+        
+        /* 底部区域 */
+        .footer {
+            margin-bottom: 30px;
+            z-index: 1;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 900px) {
+            .main-content {
+                flex-direction: column;
+                gap: 30px;
+            }
+            
+            .name-display-container, .control-panel {
+                width: 90%;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            #name-display {
+                font-size: 3rem;
+            }
+            
+            #name-display.selected {
+                font-size: 3.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 宇宙背景 -->
+    <div id="universe"></div>
+
+    <!-- 标题区域 -->
+    <div class="header">
+        <h1>陈老师课堂抽问随机点名</h1>
+    </div>
+
+    <!-- 主要内容区域 -->
+    <div class="main-content">
+        <!-- 姓名显示区域 -->
+        <div class="name-display-container">
+            <div id="name-display">准备开始</div>
+        </div>
+        
+        <!-- 控制面板 -->
+        <div class="control-panel">
+            <div class="speed-control">
+                <label for="speedSlider">滚动速度控制</label>
+                <input type="range" id="speedSlider" min="300" max="900" value="450">
+                <div class="speed-value">速度: <span id="speedValue">5</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部按钮 -->
+    <div class="footer">
+        <button id="toggleButton">开始抽问</button>
+    </div>
+
+    <script>
+        // 学生名单
+ 
+        const names = [
+            "蒋文栋", "吴聿辰", "洪嘉怡","吴悠然",
+            "周润", "张恺淳", "王玺程", "徐辰浩", "周子贤",
+            "李希佩","张振轩", "费一飞", "邹唐鋆",
+            "黄星瑶", "魏莱", "陈斐凡","严永林","邢聿轩",
+            "卢潇雅", "武扬", "符可欣", "许梦瑶", "石承玉",
+            "杨文博", "王欣悦", "张云豪", "王岳晟", "朱逸尘",
+            "蔡欣妍", "强一轩", "王力浩", "闫梓豪", "李佳宁",
+            "陈奕安", "邹宇航", "殷子骞", "许汪颖", "李佳莹",
+            "冯诗怡", "朱正曦", "何芊语", "陈茜涵", "林桐瑶",
+            "钱美郡", "宗昱含", "贾金秋", "杨洋", "顾陈程",
+"张振轩","张振轩"
+        ];
+
+        // 创建宇宙背景
+        function createUniverse() {
+            const universe = document.getElementById('universe');
+            const starsCount = 200;
+            
+            for (let i = 0; i < starsCount; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                
+                // 随机星星大小和位置
+                const size = Math.random() * 3;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                
+                // 随机闪烁动画
+                const animationDelay = Math.random() * 5;
+                star.style.animation = `twinkle ${Math.random() * 3 + 2}s infinite ${animationDelay}s alternate`;
+                
+                universe.appendChild(star);
+            }
+            
+            // 添加CSS for twinkling
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes twinkle {
+                    0% { opacity: 0.3; }
+                    100% { opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // 创建爆炸效果
+        function createExplosion(x, y) {
+            const explosion = document.createElement('div');
+            explosion.classList.add('explosion');
+            explosion.style.left = `${x}px`;
+            explosion.style.top = `${y}px`;
+            
+            // 随机爆炸颜色
+            const colors = ['#ff4081', '#4fc3f7', '#7c4dff', '#ff9800'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            
+            explosion.style.background = color;
+            explosion.style.boxShadow = `0 0 10px ${color}, 0 0 20px ${color}`;
+            
+            document.body.appendChild(explosion);
+            
+            // 爆炸动画
+            let size = 5;
+            let opacity = 1;
+            let expand = true;
+            
+            const explode = setInterval(() => {
+                if (expand) {
+                    size += 2;
+                    if (size >= 20) expand = false;
+                } else {
+                    size += 1;
+                    opacity -= 0.05;
+                }
+                
+                explosion.style.width = `${size}px`;
+                explosion.style.height = `${size}px`;
+                explosion.style.opacity = opacity;
+                explosion.style.transform = `translate(-50%, -50%)`;
+                
+                if (opacity <= 0) {
+                    clearInterval(explode);
+                    explosion.remove();
+                }
+            }, 30);
+        }
+
+        // 变量初始化
+        let interval = null;
+        let isRolling = false;
+        const nameDisplay = document.getElementById('name-display');
+        const toggleButton = document.getElementById('toggleButton');
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValue = document.getElementById('speedValue');
+
+	function updateSpeedValue() {
+ 	 let displaySpeed = Math.ceil((speedSlider.value - 50) / 35);   // 先算出 1~?
+
+	  // ---- 关键判断 ----
+	  if (displaySpeed > 20) {
+ 	   speedValue.textContent = '⚡最快了⚡';      // 也可以写 "极速" / "⚡" 等你喜欢的
+ 	 } else {
+ 	   speedValue.textContent = displaySpeed;
+	  }
+}
+
+        // 开始滚动姓名
+        function startRolling() {
+            const speed = speedSlider.value;
+            nameDisplay.classList.remove('selected');
+            
+            interval = setInterval(() => {
+                let pick;
+	do {
+ 	 pick = names[Math.floor(Math.random() * names.length)];
+	} while (!pick || !pick.trim());   // 空串或纯空格就重抽
+	nameDisplay.textContent = pick;
+                
+                // 随机添加爆炸效果
+                if (Math.random() > 0) {
+                    const rect = nameDisplay.getBoundingClientRect();
+                    const x = rect.left + Math.random() * rect.width;
+                    const y = rect.top + Math.random() * rect.height;
+                    createExplosion(x, y);
+                }
+            }, 600 - speed); // 速度反转：滑块值大 -> 延迟小 -> 速度快
+            
+            toggleButton.textContent = "暂停抽问";
+            isRolling = true;
+        }
+
+        // 停止滚动
+        function stopRolling() {
+            clearInterval(interval);
+            interval = null;
+            
+            // 突出显示选中的姓名
+            nameDisplay.classList.add('selected');
+            
+            toggleButton.textContent = "开始抽问";
+            isRolling = false;
+            
+            // 添加大型爆炸效果庆祝选中
+            const rect = nameDisplay.getBoundingClientRect();
+            for (let i = 0; i < 100; i++) {
+                setTimeout(() => {
+                    const x = Math.random() * window.innerWidth;
+                    const y = Math.random() * window.innerHeight;
+                    createExplosion(x, y);
+                }, i * 10);
+            }
+        }
+
+        // 事件监听器设置
+        toggleButton.addEventListener('click', () => {
+            if (isRolling) {
+                stopRolling();
+            } else {
+                startRolling();
+            }
+        });
+
+        speedSlider.addEventListener('input', () => {
+            updateSpeedValue();
+            if (isRolling) {
+                clearInterval(interval);
+                startRolling();
+            }
+        });
+
+        // 初始化
+        createUniverse();
+        updateSpeedValue();
+        
+        // 添加初始动画
+        setTimeout(() => {
+            nameDisplay.textContent = "点击按钮开始";
+        }, 500);
+    </script>
+</body>
+</html>
